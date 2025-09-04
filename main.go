@@ -19,13 +19,13 @@ func main() {
 	if token == "" {
 		log.Fatal("DISCORD_TOKEN not set")
 	}
-	whisparrPickChannelID := os.Getenv("TARGET_CHANNEL_ID")
+	whisparrPickChannelID := os.Getenv("WHISPARR_CHANNEL_ID")
 	if whisparrPickChannelID == "" {
-		log.Fatal("TARGET_CHANNEL_ID not set")
+		log.Fatal("WHISPARR_CHANNEL_ID not set")
 	}
-	k8sChannelID := os.Getenv("DEBUG_CHANNEL_ID")
+	k8sChannelID := os.Getenv("K8S_CHANNEL_ID")
 	if k8sChannelID == "" {
-		log.Fatal("DEBUG_CHANNEL_ID not set")
+		log.Fatal("K8S_CHANNEL_ID not set")
 	}
 
 	dg, err := discordgo.New("Bot " + token)
