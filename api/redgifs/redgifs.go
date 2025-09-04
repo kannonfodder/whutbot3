@@ -67,4 +67,35 @@ func (c *RedGifsClient) IsTokenExpired() bool {
 	return time.Now().Unix() >= c.tokenExpiry
 }
 
-func request() {}
+type searchResponse struct {
+	Success bool `json:"success"`
+	Data    []struct {
+		ID   string   `json:"id"`
+		URL  string   `json:"url"`
+		Tags []string `json:"tags"`
+	} `json:"data"`
+}
+type UrlResponse{}
+type GifResponse struct {
+	Urls []UrlResponse `json:"urls"`
+}
+type GifsResponse struct {
+	gifs
+}
+
+func (c *RedGifsClient) Search() (*http.Response, error) {
+	if c.IsTokenExpired() {
+		if err := login(c); err != nil {
+			return nil, fmt.Errorf("failed to login: %w", err)
+		}
+	}
+
+	req, err := http.NewRequest("GET", "https://api.redgifs.com/v2/gifs", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.authToken)
+
+	client := &http.Client{}
+	return client.Do(req)
+}

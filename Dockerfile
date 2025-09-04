@@ -1,7 +1,7 @@
 # Multi-stage build for a small static binary
 # Use TARGETARCH build arg (set automatically by docker buildx) to support arm64/amd64 multi-arch builds
 
-FROM golang:1.20-alpine AS build
+FROM golang:1.25-alpine AS build
 ARG TARGETARCH
 WORKDIR /src
 
