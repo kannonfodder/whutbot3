@@ -9,6 +9,23 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// HandlerFunc defines the signature for message handler functions.
+type HandlerFunc func(s *discordgo.Session, m *discordgo.MessageCreate)
+
+// DispatchMessageByChannel dispatches message handling based on channel ID.
+// handlers is a map of channel IDs to handler functions.
+func DispatchMessageByChannel(handlers map[string]HandlerFunc) func(s *discordgo.Session, m *discordgo.MessageCreate) {
+	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		if m.Author == nil || m.Author.Bot {
+			return
+		}
+		handler, ok := handlers[m.ChannelID]
+		if ok {
+			handler(s, m)
+		}
+	}
+}
+
 // StashPrefix is the prefix we look for in messages.
 const StashPrefix = "https://stashdb.org/scenes"
 
@@ -109,4 +126,10 @@ func HandleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 	}
+}
+func HandleK8sMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author == nil || m.Author.Bot {
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, "Pong")
 }
