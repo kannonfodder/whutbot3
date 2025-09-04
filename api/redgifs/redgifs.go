@@ -75,12 +75,15 @@ type searchResponse struct {
 		Tags []string `json:"tags"`
 	} `json:"data"`
 }
-type UrlResponse{}
+type UrlResponse struct {
+	Hd string `json:"hd"`
+	Sd string `json:"sd"`
+}
 type GifResponse struct {
 	Urls []UrlResponse `json:"urls"`
 }
 type GifsResponse struct {
-	gifs
+	Gifs []GifResponse `json:"gifs"`
 }
 
 func (c *RedGifsClient) Search() (*http.Response, error) {
