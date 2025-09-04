@@ -131,5 +131,12 @@ func HandleK8sMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author == nil || m.Author.Bot {
 		return
 	}
-	s.ChannelMessageSend(m.ChannelID, "Pong")
+	firstIdx := strings.Index(m.Content, " ")
+	command := m.Content[firstIdx+1:]
+	switch command {
+	case "ping":
+		s.ChannelMessageSend(m.ChannelID, "Pong")
+	default:
+		s.ChannelMessageSend(m.ChannelID, "Unknown command")
+	}
 }
