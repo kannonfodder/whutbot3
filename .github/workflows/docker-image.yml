@@ -37,7 +37,7 @@ jobs:
           # Password or personal access token used to log against the Docker registry
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build the Docker image
-        run: docker buildx build --platform $${{matrix.platform}} --tag docker.kannonfoundry.dev/whutbot3 .
+        run: docker buildx build --platform ${{matrix.platform}} --tag docker.kannonfoundry.dev/whutbot3 .
       - name: Push Docker image
         if: github.ref == 'refs/heads/main'
         run: docker push docker.kannonfoundry.dev/whutbot3
