@@ -42,9 +42,6 @@ jobs:
         with:
           platforms: ${{ matrix.platform }}
           outputs: type=image,name=docker.kannonfoundry.dev/whutbot3,push-by-digest=true,name-canonical=true,push=${{github.ref == 'res/heads/main' && 'true' || 'false'}}
-      - name: Push Docker image
-        if: github.ref == 'refs/heads/main'
-        run: docker push docker.kannonfoundry.dev/whutbot3
       - uses: sarisia/actions-status-discord@v1
         if: always()
         with:
