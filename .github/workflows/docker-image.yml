@@ -24,3 +24,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build the Docker image
         run: docker buildx build --platform "linux/arm64,linux/amd64" --tag docker.kannonfoundry.dev/whutbot3 --push .
+      - uses: sarisia/actions-status-discord@v1
+        if: always()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
