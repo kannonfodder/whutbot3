@@ -44,7 +44,7 @@ func handleGetCommand(s *discordgo.Session, m *discordgo.MessageCreate, restOfCo
 			s.ChannelMessageSend(m.ChannelID, "Failed to create k8s client")
 			return
 		}
-		dep, err := clientset.AppsV1().Deployments("bot").Get(context.TODO(), "", metav1.GetOptions{})
+		deps, err := clientset.AppsV1().Deployments("bot").List(context.TODO(), metav1.ListOptions{})
 		if k8sErrors.IsNotFound(err) {
 			s.ChannelMessageSend(m.ChannelID, "Failed to get deployment - not found")
 			fmt.Printf("%s", err.Error())
@@ -53,7 +53,9 @@ func handleGetCommand(s *discordgo.Session, m *discordgo.MessageCreate, restOfCo
 		} else if err != nil {
 			fmt.Printf("Error getting pod %v\n", err)
 		} else {
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Deployment found: %s", dep.Name))
+			for _, dep := range deps.Items {
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Deployment found: %s", dep.Name))
+			}
 			return
 		}
 		s.ChannelMessageSend(m.ChannelID, "Failed to get deployment")
