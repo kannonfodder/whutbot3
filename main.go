@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -11,22 +13,50 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+type Config struct {
+	Token             string
+	WhisparrChannelID string
+	K8SChannelID      string
+	LogChannelID      string
+}
+
+func loadConfig() (*Config, error) {
+	cfg := &Config{
+		Token:             os.Getenv("DISCORD_TOKEN"),
+		WhisparrChannelID: os.Getenv("WHISPARR_CHANNEL_ID"),
+		K8SChannelID:      os.Getenv("K8S_CHANNEL_ID"),
+		LogChannelID:      os.Getenv("LOG_CHANNEL_ID"),
+	}
+	newError := errors.New("config error")
+	errString := ""
+	if cfg.Token == "" {
+		errString += fmt.Sprintf("%w: DISCORD_TOKEN\n", newError)
+	}
+	if cfg.WhisparrChannelID == "" {
+		errString += fmt.Sprintf("%w: WHISPARR_CHANNEL_ID\n", newError)
+	}
+	if cfg.K8SChannelID == "" {
+		errString += fmt.Sprintf("%w: K8S_CHANNEL_ID\n", newError)
+	}
+	if cfg.LogChannelID == "" {
+		errString += fmt.Sprintf("%w: ERROR_CHANNEL_ID\n", newError)
+	}
+	if errString != "" {
+		return nil, fmt.Errorf("%w: %s", newError, errString)
+	}
+	return cfg, nil
+}
+
 func main() {
 	// Load .env if present (values do not override existing environment variables)
 	dotenv.Load(".env")
 
-	token := os.Getenv("DISCORD_TOKEN")
-	if token == "" {
-		log.Fatal("DISCORD_TOKEN not set")
+	cfg, err := loadConfig()
+	if err != nil {
+		log.Fatalf("error loading config: %v", err)
 	}
-	whisparrPickChannelID := os.Getenv("WHISPARR_CHANNEL_ID")
-	if whisparrPickChannelID == "" {
-		log.Fatal("WHISPARR_CHANNEL_ID not set")
-	}
-	k8sChannelID := os.Getenv("K8S_CHANNEL_ID")
-	if k8sChannelID == "" {
-		log.Fatal("K8S_CHANNEL_ID not set")
-	}
+
+	token := cfg.Token
 
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
@@ -41,15 +71,15 @@ func main() {
 			return
 		}
 		messages.DispatchMessageByChannel(map[string]messages.HandlerFunc{
-			whisparrPickChannelID: messages.HandleMessage,
-			k8sChannelID:          messages.HandleK8sMessage,
+			cfg.WhisparrChannelID: messages.HandleMessage,
+			cfg.K8SChannelID:      messages.HandleK8sMessage,
 		})(s, m)
 	})
 
-	dg.ChannelMessageSend(whisparrPickChannelID, "WhutBot is now running and listening for stashdb links.")
+	dg.ChannelMessageSend(cfg.LogChannelID, "WhutBot is now running and listening for stashdb links.")
 
 	if err = dg.Open(); err != nil {
-		dg.ChannelMessageSend(whisparrPickChannelID, "WhutBot is shutting down.")
+		dg.ChannelMessageSend(cfg.LogChannelID, "WhutBot is shutting down.")
 		log.Fatalf("error opening connection: %v", err)
 	}
 	defer dg.Close()
@@ -59,6 +89,6 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
-	dg.ChannelMessageSend(whisparrPickChannelID, "WhutBot is shutting down.")
+	dg.ChannelMessageSend(cfg.LogChannelID, "WhutBot is shutting down.")
 	log.Println("Shutting down.")
 }
