@@ -1,4 +1,4 @@
-module example.com/whutbot3
+module kannonfoundry/whutbot3
 
 go 1.24.0
 

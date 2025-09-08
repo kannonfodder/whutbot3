@@ -8,20 +8,15 @@ import (
 	"os/signal"
 	"syscall"
 
-	"example.com/whutbot3/dotenv"
-	"example.com/whutbot3/messages"
+	"kannonfoundry/whutbot3/config"
+	"kannonfoundry/whutbot3/dotenv"
+	"kannonfoundry/whutbot3/messages"
+
 	"github.com/bwmarrin/discordgo"
 )
 
-type Config struct {
-	Token             string
-	WhisparrChannelID string
-	K8SChannelID      string
-	LogChannelID      string
-}
-
-func loadConfig() (*Config, error) {
-	cfg := &Config{
+func loadConfig() (*config.Config, error) {
+	cfg := &config.Config{
 		Token:             os.Getenv("DISCORD_TOKEN"),
 		WhisparrChannelID: os.Getenv("WHISPARR_CHANNEL_ID"),
 		K8SChannelID:      os.Getenv("K8S_CHANNEL_ID"),
@@ -70,10 +65,7 @@ func main() {
 		if m.Author == nil || m.Author.Bot {
 			return
 		}
-		messages.DispatchMessageByChannel(map[string]messages.HandlerFunc{
-			cfg.WhisparrChannelID: messages.HandleStashMessage,
-			cfg.K8SChannelID:      messages.HandleK8sMessage,
-		})(s, m)
+		messages.DispatchMessageByChannel(messages.DefaultHandlers(cfg))(s, m)
 	})
 
 	dg.ChannelMessageSend(cfg.LogChannelID, "WhutBot is now running and listening")
