@@ -44,11 +44,12 @@ func handleGetCommand(s *discordgo.Session, m *discordgo.MessageCreate, restOfCo
 			s.ChannelMessageSend(m.ChannelID, "Failed to create k8s client")
 			return
 		}
-		dep, err := clientset.AppsV1().Deployments("bot").Get(context.TODO(), restOfCommand, metav1.GetOptions{})
+		dep, err := clientset.AppsV1().Deployments("bot").Get(context.TODO(), "", metav1.GetOptions{})
 		if k8sErrors.IsNotFound(err) {
-			fmt.Printf("Pod example-xxxxx not found in default namespace\n")
+			s.ChannelMessageSend(m.ChannelID, "Failed to get deployment - not found")
+			fmt.Printf("%s", err.Error())
 		} else if statusError, isStatus := err.(*k8sErrors.StatusError); isStatus {
-			fmt.Printf("Error getting pod %v\n", statusError.ErrStatus.Message)
+			fmt.Printf("%s", statusError.ErrStatus.Message)
 		} else if err != nil {
 			fmt.Printf("Error getting pod %v\n", err)
 		} else {
