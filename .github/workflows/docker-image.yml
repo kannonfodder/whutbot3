@@ -48,6 +48,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
+          platforms: ${{ matrix.platform }}
           tags: |
             docker.kannonfoundry.dev/whutbot3:latest
       - uses: sarisia/actions-status-discord@v1
