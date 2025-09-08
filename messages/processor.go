@@ -61,9 +61,9 @@ func ParseStashLink(url string) (string, error) {
 	return scene, nil
 }
 
-// HandleMessage processes a Discord message and responds when it contains a stashdb link.
+// HandleStashMessage processes a Discord message and responds when it contains a stashdb link.
 // It does not filter by channel — the caller should ensure channel filtering if desired.
-func HandleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
+func HandleStashMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author == nil || m.Author.Bot {
 		return
 	}
@@ -138,8 +138,10 @@ func HandleK8sMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	firstIdx := strings.Index(m.Content, " ")
-	command := m.Content[firstIdx+1:]
-	rest := m.Content[:firstIdx+1]
+	command := m.Content[:firstIdx]
+	rest := m.Content[firstIdx+1:]
+	
+	fmt.Printf("Command: '%s', Rest: '%s'", command, rest)
 	switch command {
 	case "ping":
 		s.ChannelMessageSend(m.ChannelID, "Pong")

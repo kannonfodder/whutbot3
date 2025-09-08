@@ -71,12 +71,12 @@ func main() {
 			return
 		}
 		messages.DispatchMessageByChannel(map[string]messages.HandlerFunc{
-			cfg.WhisparrChannelID: messages.HandleMessage,
+			cfg.WhisparrChannelID: messages.HandleStashMessage,
 			cfg.K8SChannelID:      messages.HandleK8sMessage,
 		})(s, m)
 	})
 
-	dg.ChannelMessageSend(cfg.LogChannelID, "WhutBot is now running and listening for stashdb links.")
+	dg.ChannelMessageSend(cfg.LogChannelID, "WhutBot is now running and listening")
 
 	if err = dg.Open(); err != nil {
 		dg.ChannelMessageSend(cfg.LogChannelID, "WhutBot is shutting down.")
