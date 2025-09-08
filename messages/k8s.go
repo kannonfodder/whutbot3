@@ -26,18 +26,9 @@ func HandleK8sMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch command {
 	case "ping":
 		s.ChannelMessageSend(m.ChannelID, "Pong")
-	case "get":
-		handleGetCommand(s, m, arguments)
+	case "deployments":
+		handleDeploymentsCommand(s, m, arguments)
 	default:
 		s.ChannelMessageSend(m.ChannelID, "Unknown command")
-	}
-}
-
-func handleGetCommand(s *discordgo.Session, m *discordgo.MessageCreate, restOfCommand string) {
-	command, arguments := ParseCommand(restOfCommand)
-	if command == "deployments" {
-		handleDeploymentsCommand(s, m, arguments)
-	} else {
-		s.ChannelMessageSend(m.ChannelID, "Unknown resource")
 	}
 }
