@@ -41,7 +41,15 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           platforms: ${{ matrix.platform }}
-          outputs: type=image,name=docker.kannonfoundry.dev/whutbot3,push-by-digest=true,name-canonical=true,push=${{github.ref == 'refs/heads/main' && 'true' || 'false'}}
+          outputs: type=image,name=docker.kannonfoundry.dev/whutbot3,name-canonical=true,push=false
+      - name: Push to Docker Registry
+        id: push
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            docker.kannonfoundry.dev/whutbot3:latest
       - uses: sarisia/actions-status-discord@v1
         if: always()
         with:
