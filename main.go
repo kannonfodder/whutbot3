@@ -25,16 +25,16 @@ func loadConfig() (*config.Config, error) {
 	newError := errors.New("config error")
 	errString := ""
 	if cfg.Token == "" {
-		errString += fmt.Sprintf("%w: DISCORD_TOKEN\n", newError)
+		errString += fmt.Sprintf("%s: DISCORD_TOKEN\n", newError)
 	}
 	if cfg.WhisparrChannelID == "" {
-		errString += fmt.Sprintf("%w: WHISPARR_CHANNEL_ID\n", newError)
+		errString += fmt.Sprintf("%s: WHISPARR_CHANNEL_ID\n", newError)
 	}
 	if cfg.K8SChannelID == "" {
-		errString += fmt.Sprintf("%w: K8S_CHANNEL_ID\n", newError)
+		errString += fmt.Sprintf("%s: K8S_CHANNEL_ID\n", newError)
 	}
 	if cfg.LogChannelID == "" {
-		errString += fmt.Sprintf("%w: ERROR_CHANNEL_ID\n", newError)
+		errString += fmt.Sprintf("%s: ERROR_CHANNEL_ID\n", newError)
 	}
 	if errString != "" {
 		return nil, fmt.Errorf("%w: %s", newError, errString)

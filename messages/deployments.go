@@ -16,6 +16,8 @@ import (
 func handleDeploymentsCommand(s *discordgo.Session, m *discordgo.MessageCreate, args string) {
 	command, arguments := ParseCommand(args)
 	switch command {
+	case "help":
+		s.ChannelMessageSend(m.ChannelID, "Available deployments commands: list [namespace], restart <namespace> <deployment>")
 	case "list":
 		handleDeploymentsListCommand(s, m, arguments)
 	case "restart":
@@ -49,9 +51,9 @@ func handleDeploymentsListCommand(s *discordgo.Session, m *discordgo.MessageCrea
 	} else {
 		var depNames []string
 		for _, dep := range deps.Items {
-			depNames = append(depNames, fmt.Sprintf("%s - %s - %s", dep.Namespace, dep.Name, dep.Status.String()))
+			depNames = append(depNames, fmt.Sprintf("%s - %s", dep.Namespace, dep.Name))
 		}
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Deployments found:\n%s", strings.Join(depNames, "\n")))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Deployments found: namespace - name\n%s", strings.Join(depNames, "\n")))
 		return
 	}
 	s.ChannelMessageSend(m.ChannelID, "Failed to get deployment")
