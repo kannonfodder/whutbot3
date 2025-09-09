@@ -10,9 +10,11 @@ import (
 
 type R34Posts []R34Post
 type R34Post struct {
-	ID      int64  `json:"id"`
-	Tags    string `json:"tags"`
-	FileURL string `json:"file_url"`
+	ID       int64  `json:"id"`
+	Tags     string `json:"tags"`
+	FileURL  string `json:"file_url"`
+	Hash     string `json:"hash"`
+	FileName string `json:"image"`
 }
 
 var (
@@ -21,7 +23,7 @@ var (
 
 func getSearchUrl(tags []string) string {
 	cfg := config.Default()
-	return fmt.Sprintf("%s&tags=%s&user_id=%s&api_key=%s", baseUrl, strings.Join(tags, ","), cfg.R34UserID, cfg.R34ApiKey)
+	return fmt.Sprintf("%s&tags=%s&user_id=%s&api_key=%s", baseUrl, strings.Join(tags, "+"), cfg.R34UserID, cfg.R34ApiKey)
 }
 
 func GetPosts(tags []string) (R34Posts, error) {
@@ -32,6 +34,7 @@ func GetPosts(tags []string) (R34Posts, error) {
 	if err != nil {
 		return R34Posts{}, err
 	}
+	req.Close = true
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

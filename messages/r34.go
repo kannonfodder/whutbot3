@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kannonfoundry/whutbot3/api/rule34"
 	"kannonfoundry/whutbot3/db"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -81,10 +82,31 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		return
 	}
 
-	//Send the first post
-	s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
-		Image: &discordgo.MessageEmbedImage{
-			URL: posts[0].FileURL,
-		},
-	})
+	//check if the posts slice is empty
+	if len(posts) == 0 {
+		s.ChannelMessageSend(m.ChannelID, "No posts found.")
+		return
+	}
+	req, err := http.NewRequest("GET", posts[0].FileURL, nil)
+	if err != nil {
+
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	_, err = s.ChannelFileSend(m.ChannelID, posts[0].FileName, resp.Body)
+	if err != nil {
+		if strings.Contains(err.Error(), "entity too large") {
+			s.ChannelMessageSend(m.ChannelID, "The booty too big 🥵")
+		} else {
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error sending file: %v", err))
+			fmt.Printf("error sending file: %v", err)
+		}
+	}
+
 }
