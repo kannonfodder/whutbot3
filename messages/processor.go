@@ -13,6 +13,7 @@ func DefaultHandlers(cfg *config.Config) map[string]HandlerFunc {
 	return map[string]HandlerFunc{
 		cfg.WhisparrChannelID: HandleStashMessage,
 		cfg.K8SChannelID:      HandleK8sMessage,
+		cfg.R34ChannelID:      HandleR34Message,
 	}
 }
 

@@ -1,0 +1,13 @@
+package messages
+
+import (
+	"strings"
+)
+
+func parseCommand(input string) (command string, arguments string) {
+	parts := strings.SplitN(input, " ", 2)
+	if len(parts) > 1 {
+		return parts[0], parts[1]
+	}
+	return parts[0], ""
+}

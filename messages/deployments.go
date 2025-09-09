@@ -14,7 +14,7 @@ import (
 )
 
 func handleDeploymentsCommand(s *discordgo.Session, m *discordgo.MessageCreate, args string) {
-	command, arguments := ParseCommand(args)
+	command, arguments := parseCommand(args)
 	switch command {
 	case "help":
 		s.ChannelMessageSend(m.ChannelID, "Available deployments commands: list [namespace], restart <namespace> <deployment>")

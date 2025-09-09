@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -15,42 +13,11 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func loadConfig() (*config.Config, error) {
-	cfg := &config.Config{
-		Token:             os.Getenv("DISCORD_TOKEN"),
-		WhisparrChannelID: os.Getenv("WHISPARR_CHANNEL_ID"),
-		K8SChannelID:      os.Getenv("K8S_CHANNEL_ID"),
-		LogChannelID:      os.Getenv("LOG_CHANNEL_ID"),
-	}
-	newError := errors.New("config error")
-	errString := ""
-	if cfg.Token == "" {
-		errString += fmt.Sprintf("%s: DISCORD_TOKEN\n", newError)
-	}
-	if cfg.WhisparrChannelID == "" {
-		errString += fmt.Sprintf("%s: WHISPARR_CHANNEL_ID\n", newError)
-	}
-	if cfg.K8SChannelID == "" {
-		errString += fmt.Sprintf("%s: K8S_CHANNEL_ID\n", newError)
-	}
-	if cfg.LogChannelID == "" {
-		errString += fmt.Sprintf("%s: ERROR_CHANNEL_ID\n", newError)
-	}
-	if errString != "" {
-		return nil, fmt.Errorf("%w: %s", newError, errString)
-	}
-	return cfg, nil
-}
-
 func main() {
 	// Load .env if present (values do not override existing environment variables)
 	dotenv.Load(".env")
 
-	cfg, err := loadConfig()
-	if err != nil {
-		log.Fatalf("error loading config: %v", err)
-	}
-
+	cfg := config.Default()
 	token := cfg.Token
 
 	dg, err := discordgo.New("Bot " + token)
