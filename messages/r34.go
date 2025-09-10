@@ -2,6 +2,7 @@ package messages
 
 import (
 	"fmt"
+	"io"
 	"kannonfoundry/whutbot3/api/rule34"
 	"kannonfoundry/whutbot3/db"
 	"net/http"
@@ -77,8 +78,12 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 	// Fetch posts from the Rule34 API
 	posts, err := rule34.GetPosts(strings.Fields(searchTerm))
 	if err != nil {
-		fmt.Printf("error fetching posts: %v", err)
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error fetching posts: %v", err))
+		if err == io.EOF {
+			s.ChannelMessageSend(m.ChannelID, "No posts found.")
+		} else {
+			fmt.Printf("error fetching posts: %v", err)
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error fetching posts: %v", err))
+		}
 		return
 	}
 
