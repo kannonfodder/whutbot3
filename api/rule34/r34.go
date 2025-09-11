@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"kannonfoundry/whutbot3/api"
 	"kannonfoundry/whutbot3/config"
+	"kannonfoundry/whutbot3/db"
 	"net/http"
 	"strings"
 )
@@ -26,22 +27,42 @@ func getSearchUrl(tags []string) string {
 	cfg := config.Default()
 	return fmt.Sprintf("%s&tags=%s&user_id=%s&api_key=%s", baseUrl, strings.Join(tags, "+"), cfg.R34UserID, cfg.R34ApiKey)
 }
+
+func NewClient() *R34MediaSearcher {
+	return &R34MediaSearcher{}
+}
 type R34MediaSearcher struct{}
 
-func (s *R34MediaSearcher) Search(tags []string) (file api.FileToSend, err error) {
+func (s *R34MediaSearcher) Search(tags []string) (file []api.FileToSend, err error) {
 	posts, err := GetPosts(tags)
 	if err != nil {
-		return api.FileToSend{}, err
+		return []api.FileToSend{}, err
 	}
 	if len(posts) == 0 {
-		return api.FileToSend{}, fmt.Errorf("no posts found")
+		return []api.FileToSend{}, fmt.Errorf("no posts found")
 	}
-	post := posts[0]
-	return api.FileToSend{
-		Name: post.FileName,
-		URL:  post.FileURL,
-	}, nil
+	var results = []api.FileToSend{}
+	for _, post := range posts {
+		results = append(results, api.FileToSend{
+			Name: post.FileName,
+			URL:  post.FileURL,
+		})
+	}
+	return results, nil
 }
+
+func (s *R34MediaSearcher) FormatAndModifySearch(tags []string, authorID int64) (searchTerm string, err error) {
+	prefs, err := db.GetPreferences(authorID)
+	if err != nil {
+		return "", err
+	}
+	searchTerm = strings.Join(tags, " ")
+	for _, pref := range prefs {
+		searchTerm += " " + pref.Preference
+	}
+	return searchTerm, nil
+}
+
 func GetPosts(tags []string) (R34Posts, error) {
 	// Implementation for fetching posts from the Rule34 API
 
