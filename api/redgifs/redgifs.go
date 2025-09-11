@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"kannonfoundry/whutbot3/api"
 	"net/http"
 	"strings"
 	"time"
@@ -14,16 +15,20 @@ type RedGifsClient struct {
 	tokenExpiry int64
 }
 type loginResponse struct {
-	token string `json:"token"`
+	Token string `json:"token"`
 }
 
 func NewClient() *RedGifsClient {
 	return &RedGifsClient{}
 }
 
-func login(client *RedGifsClient) error {
+var (
+	baseUrl = "https://api.redgifs.com/v2"
+)
+
+func (client *RedGifsClient) login() error {
 	client.authToken = "" // reset any existing token
-	resp, err := http.Get("https://api.redgifs.com/v2/auth/temporary")
+	resp, err := http.Get(baseUrl + "/auth/temporary")
 	if err != nil {
 		return err
 	}
@@ -38,10 +43,10 @@ func login(client *RedGifsClient) error {
 		return err
 	}
 
-	client.authToken = loginResp.token
+	client.authToken = loginResp.Token
 
 	// Decode JWT token to extract exp
-	parts := strings.Split(loginResp.token, ".")
+	parts := strings.Split(loginResp.Token, ".")
 	if len(parts) != 3 {
 		return fmt.Errorf("invalid JWT token format")
 	}
@@ -67,38 +72,62 @@ func (c *RedGifsClient) IsTokenExpired() bool {
 	return time.Now().Unix() >= c.tokenExpiry
 }
 
-type searchResponse struct {
-	Success bool `json:"success"`
-	Data    []struct {
-		ID   string   `json:"id"`
-		URL  string   `json:"url"`
-		Tags []string `json:"tags"`
-	} `json:"data"`
-}
 type UrlResponse struct {
 	Hd string `json:"hd"`
 	Sd string `json:"sd"`
 }
 type GifResponse struct {
-	Urls []UrlResponse `json:"urls"`
+	Urls UrlResponse `json:"urls"`
+	Id   string      `json:"id"`
 }
 type GifsResponse struct {
 	Gifs []GifResponse `json:"gifs"`
 }
 
-func (c *RedGifsClient) Search() (*http.Response, error) {
+func (c *RedGifsClient) FormatAndModifySearch(tags []string, authorID int64) (searchTerm string, err error) {
+	return strings.Join(tags, " "), nil
+}
+
+func (c *RedGifsClient) Search(tags []string) (files []api.FileToSend, err error) {
 	if c.IsTokenExpired() {
-		if err := login(c); err != nil {
+		if err := c.login(); err != nil {
 			return nil, fmt.Errorf("failed to login: %w", err)
 		}
 	}
 
-	req, err := http.NewRequest("GET", "https://api.redgifs.com/v2/gifs", nil)
+	req, err := http.NewRequest("GET", baseUrl+"/gifs", nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.authToken)
 
 	client := &http.Client{}
-	return client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return  nil, err
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return  nil, fmt.Errorf("search request failed: %s", resp.Status)
+	}
+	var searchResp GifsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&searchResp); err != nil {
+		return  nil, err
+	}
+	var results []api.FileToSend
+	for _, gif := range searchResp.Gifs {
+		if gif.Urls.Sd != ""{
+			results = append(results, api.FileToSend{
+				Name: "redgif_"+gif.Urls.Sd,
+				URL:  gif.Urls.Sd,
+			})
+		} else if gif.Urls.Hd != ""{
+			results = append(results, api.FileToSend{
+				Name: "redgif_"+gif.Urls.Hd,
+				URL:  gif.Urls.Hd,
+			})
+		}
+	}
+	return results, nil
 }

@@ -9,5 +9,5 @@ func parseCommand(input string) (command string, arguments string) {
 	if len(parts) > 1 {
 		return parts[0], parts[1]
 	}
-	return parts[0], ""
+	return strings.ToLower(parts[0]), ""
 }
