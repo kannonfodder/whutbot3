@@ -95,7 +95,7 @@ func (c *RedGifsClient) Search(tags []string) (files []api.FileToSend, err error
 		}
 	}
 
-	req, err := http.NewRequest("GET", baseUrl+"/gifs", nil)
+	req, err := http.NewRequest("GET", baseUrl+"/gifs/search?search_text="+tags[0]+"&count=5", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -104,27 +104,27 @@ func (c *RedGifsClient) Search(tags []string) (files []api.FileToSend, err error
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return  nil, err
+		return nil, err
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
-		return  nil, fmt.Errorf("search request failed: %s", resp.Status)
+		return nil, fmt.Errorf("search request failed: %s", resp.Status)
 	}
 	var searchResp GifsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&searchResp); err != nil {
-		return  nil, err
+		return nil, err
 	}
 	var results []api.FileToSend
 	for _, gif := range searchResp.Gifs {
-		if gif.Urls.Sd != ""{
+		if gif.Urls.Sd != "" {
 			results = append(results, api.FileToSend{
-				Name: "redgif_"+gif.Urls.Sd,
+				Name: "redgif_" + gif.Urls.Sd,
 				URL:  gif.Urls.Sd,
 			})
-		} else if gif.Urls.Hd != ""{
+		} else if gif.Urls.Hd != "" {
 			results = append(results, api.FileToSend{
-				Name: "redgif_"+gif.Urls.Hd,
+				Name: "redgif_" + gif.Urls.Hd,
 				URL:  gif.Urls.Hd,
 			})
 		}
