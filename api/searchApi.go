@@ -6,5 +6,6 @@ type FileToSend struct{
 }
 
 type MediaSearcher interface {
-	Search(tags []string) (file FileToSend, err error)
+	Search(tags []string) (files []FileToSend, err error)
+	FormatAndModifySearch(tags []string, authorID int64) (searchTerm string, err error)
 }
