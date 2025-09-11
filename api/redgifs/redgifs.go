@@ -21,9 +21,13 @@ func NewClient() *RedGifsClient {
 	return &RedGifsClient{}
 }
 
-func login(client *RedGifsClient) error {
+var (
+	baseUrl = "https://api.redgifs.com/v2"
+)
+
+func (client *RedGifsClient) login() error {
 	client.authToken = "" // reset any existing token
-	resp, err := http.Get("https://api.redgifs.com/v2/auth/temporary")
+	resp, err := http.Get(baseUrl + "/auth/temporary")
 	if err != nil {
 		return err
 	}
@@ -86,19 +90,32 @@ type GifsResponse struct {
 	Gifs []GifResponse `json:"gifs"`
 }
 
-func (c *RedGifsClient) Search() (*http.Response, error) {
+func (c *RedGifsClient) Search() ( gifs []GifResponse, err error) {
 	if c.IsTokenExpired() {
-		if err := login(c); err != nil {
-			return nil, fmt.Errorf("failed to login: %w", err)
+		if err := c.login(); err != nil {
+			return  nil, fmt.Errorf("failed to login: %w", err)
 		}
 	}
 
-	req, err := http.NewRequest("GET", "https://api.redgifs.com/v2/gifs", nil)
+	req, err := http.NewRequest("GET", baseUrl+"/gifs", nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.authToken)
 
 	client := &http.Client{}
-	return client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return  nil, err
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return  nil, fmt.Errorf("search request failed: %s", resp.Status)
+	}
+	var searchResp GifsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&searchResp); err != nil {
+		return  nil, err
+	}
+	return searchResp.Gifs, nil
 }

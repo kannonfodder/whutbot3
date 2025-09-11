@@ -3,6 +3,7 @@ package rule34
 import (
 	"encoding/json"
 	"fmt"
+	"kannonfoundry/whutbot3/api"
 	"kannonfoundry/whutbot3/config"
 	"net/http"
 	"strings"
@@ -25,7 +26,22 @@ func getSearchUrl(tags []string) string {
 	cfg := config.Default()
 	return fmt.Sprintf("%s&tags=%s&user_id=%s&api_key=%s", baseUrl, strings.Join(tags, "+"), cfg.R34UserID, cfg.R34ApiKey)
 }
+type R34MediaSearcher struct{}
 
+func (s *R34MediaSearcher) Search(tags []string) (file api.FileToSend, err error) {
+	posts, err := GetPosts(tags)
+	if err != nil {
+		return api.FileToSend{}, err
+	}
+	if len(posts) == 0 {
+		return api.FileToSend{}, fmt.Errorf("no posts found")
+	}
+	post := posts[0]
+	return api.FileToSend{
+		Name: post.FileName,
+		URL:  post.FileURL,
+	}, nil
+}
 func GetPosts(tags []string) (R34Posts, error) {
 	// Implementation for fetching posts from the Rule34 API
 
