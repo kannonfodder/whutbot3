@@ -3,6 +3,8 @@ package messages
 import (
 	"fmt"
 	"io"
+	"kannonfoundry/whutbot3/api"
+	redgifsapi "kannonfoundry/whutbot3/api/redgifs"
 	"kannonfoundry/whutbot3/api/rule34"
 	"kannonfoundry/whutbot3/db"
 	"net/http"
@@ -56,6 +58,14 @@ func handlePrefsCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 
 func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args string) {
 	// Handle the "gimme" command
+	var searchClient api.MediaSearcher
+	//check if first argument is gif
+	command, arguments := parseCommand(args)
+	if command == "gif" {
+		searchClient = redgifsapi.NewClient()
+	} else{
+		searchClient = &rule34.R34MediaSearcher{}
+	}
 
 	authorID, err := strconv.ParseInt(m.Author.ID, 10, 64)
 	if err != nil {
