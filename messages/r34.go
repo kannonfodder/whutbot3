@@ -25,6 +25,8 @@ func HandleR34Message(s *discordgo.Session, m *discordgo.MessageCreate) {
 		handlePrefsCommand(s, m, arguments)
 	case "gimme":
 		handleGimmeCommand(s, m, arguments)
+	case "more":
+		handleMoreCommand(s, m)
 	default:
 		s.ChannelMessageSend(m.ChannelID, "Unknown r34 command")
 	}
@@ -56,6 +58,18 @@ func handlePrefsCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 	}
 }
 
+func handleMoreCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
+	msgs, err := s.ChannelMessages(m.ChannelID, 2, "", "", "")
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error fetching messages: %v", err))
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, "More command received")
+	for msg := range msgs {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Message: %s", msgs[msg].Content))
+	}
+}
+
 func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args string) {
 	// Handle the "gimme" command
 	var searchClient api.MediaSearcher
@@ -80,7 +94,6 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error modifying search: %v", err))
 		return
 	}
-	
 
 	s.ChannelMessageSend(m.ChannelID, "Gonna search for: "+searchTerm)
 	files, err := searchClient.Search(strings.Fields(searchTerm))
@@ -97,7 +110,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 	}
 
 	//check if the posts slice is empty
-	
+
 	if len(files) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "No posts found.")
 		return
