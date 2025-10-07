@@ -26,7 +26,7 @@ func HandleR34Message(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case "gimme":
 		handleGimmeCommand(s, m, arguments)
 	case "more":
-		handleMoreCommand(s, m)
+		handleMoreCommand(s, m, 0, "")
 	default:
 		s.ChannelMessageSend(m.ChannelID, "Unknown r34 command")
 	}
@@ -58,15 +58,35 @@ func handlePrefsCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 	}
 }
 
-func handleMoreCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
-	msgs, err := s.ChannelMessages(m.ChannelID, 2, "", "", "")
+func handleMoreCommand(s *discordgo.Session, m *discordgo.MessageCreate, depth int, lastMessageID string) {
+	if depth == 0 {
+		s.MessageReactionAdd(m.ChannelID, m.ID, "🔍")
+		s.ChannelMessageSend(m.ChannelID, "More command received")
+	}
+	found := false
+	msgs, err := s.ChannelMessages(m.ChannelID, 5, lastMessageID, "", "")
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error fetching messages: %v", err))
 		return
 	}
-	s.ChannelMessageSend(m.ChannelID, "More command received")
-	for msg := range msgs {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Message: %s", msgs[msg].Content))
+
+	for _, msg := range msgs {
+		if msg.Author.Bot {
+			continue
+		}
+		if strings.HasPrefix(msg.Content, "gimme") {
+			found = true
+			_, arguments := parseCommand(msg.Content)
+			handleGimmeCommand(s, m, arguments)
+			s.MessageReactionRemove(m.ChannelID, m.ID, "🔍", s.State.User.ID)
+		}
+
+	}
+	if !found && depth < 3 {
+		handleMoreCommand(s, m, depth+1, msgs[len(msgs)-1].ID)
+	} else if !found {
+		s.MessageReactionRemove(m.ChannelID, m.ID, "🔍", s.State.User.ID)
+		s.ChannelMessageSend(m.ChannelID, "No recent gimme command found.")
 	}
 }
 
@@ -83,7 +103,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		searchClient = rule34.NewClient()
 		searchArgs = args
 	}
-	s.ChannelMessageSend(m.ChannelID, "Gimme command received with args: "+args)
+	//s.ChannelMessageSend(m.ChannelID, "Gimme command received with args: "+args)
 
 	authorID, err := strconv.ParseInt(m.Author.ID, 10, 64)
 	if err != nil {
@@ -95,10 +115,9 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		return
 	}
 
-	s.ChannelMessageSend(m.ChannelID, "Gonna search for: "+searchTerm)
+	searchMsg, _ := s.ChannelMessageSend(m.ChannelID, "Gonna search for: "+searchTerm)
+	// Fetch posts from the API
 	files, err := searchClient.Search(strings.Fields(searchTerm))
-	// Fetch posts from the Rule34 API
-	// posts, err := rule34.GetPosts(strings.Fields(searchTerm))
 	if err != nil {
 		if err == io.EOF {
 			s.ChannelMessageSend(m.ChannelID, "No posts found.")
@@ -136,6 +155,8 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error sending file: %v", err))
 			fmt.Printf("error sending file: %v", err)
 		}
+	} else {
+		s.ChannelMessageDelete(searchMsg.ChannelID, searchMsg.ID)
 	}
 
 }
