@@ -7,7 +7,6 @@ import (
 	redgifsapi "kannonfoundry/whutbot3/api/redgifs"
 	"kannonfoundry/whutbot3/api/rule34"
 	prefs "kannonfoundry/whutbot3/db/preferences"
-	"kannonfoundry/whutbot3/db/sent"
 	"net/http"
 	"strconv"
 	"strings"
@@ -129,7 +128,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		return
 	}
 
-	fmt.Printf("Found files: %v", len(files))
+	fmt.Printf("Found files: %d", len(files))
 	//check if the posts slice is empty
 
 	if len(files) == 0 {
@@ -138,28 +137,28 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 	}
 	//just get the first file for now
 
-	sentDB, err := sent.NewSentDB()
-	defer sentDB.Close()
-	if err != nil {
-		fmt.Printf("Error initializing sent database: %v", err)
-		return
-	}
-	var fileUrl = ""
-	for _, file := range files {
-		beenSent, err := sentDB.HasBeenSent(file.URL)
-		if err != nil {
-			fmt.Printf("Error checking sent database: %v", err)
-			return
-		}
-		if !beenSent {
-			fileUrl = file.URL
-		}
-	}
-	if fileUrl == "" {
-		fileUrl = files[0].URL
-		fmt.Printf("No new files found: %v", len(files))
-	}
-	req, err := http.NewRequest("GET", fileUrl, nil)
+	// sentDB, err := sent.NewSentDB()
+	// if err != nil {
+	// 	fmt.Printf("Error initializing sent database: %v", err)
+	// 	return
+	// }
+	// defer sentDB.Close()
+	// var fileUrl = ""
+	// for _, file := range files {
+	// 	beenSent, err := sentDB.HasBeenSent(file.URL)
+	// 	if err != nil {
+	// 		fmt.Printf("Error checking sent database: %v", err)
+	// 		return
+	// 	}
+	// 	if !beenSent {
+	// 		fileUrl = file.URL
+	// 	}
+	// }
+	// if fileUrl == "" {
+	// 	fileUrl = files[0].URL
+	// 	fmt.Printf("No new files found")
+	// }
+	req, err := http.NewRequest("GET", files[0].URL, nil)
 	if err != nil {
 		fmt.Printf("Error creating HTTP request: %v", err)
 		return
@@ -172,11 +171,11 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 	}
 	defer resp.Body.Close()
 
-	err = sentDB.MarkAsSent(fileUrl)
-	if err != nil {
-		fmt.Printf("Error marking post as sent: %v", err)
-		return
-	}
+	// err = sentDB.MarkAsSent(fileUrl)
+	// if err != nil {
+	// 	fmt.Printf("Error marking post as sent: %v", err)
+	// 	return
+	// }
 
 	_, err = s.ChannelFileSend(m.ChannelID, files[0].Name, resp.Body)
 	if err != nil {
