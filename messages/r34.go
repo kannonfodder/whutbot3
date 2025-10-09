@@ -105,7 +105,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		searchArgs = args
 	}
 	//s.ChannelMessageSend(m.ChannelID, "Gimme command received with args: "+args)
-
+	fmt.Printf("Searching for: %v", searchArgs)
 	authorID, err := strconv.ParseInt(m.Author.ID, 10, 64)
 	if err != nil {
 		fmt.Printf("error parsing user ID: %v", err)
@@ -129,6 +129,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		return
 	}
 
+	fmt.Printf("Found files: %v", len(files))
 	//check if the posts slice is empty
 
 	if len(files) == 0 {
@@ -138,6 +139,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 	//just get the first file for now
 
 	sentDB, err := sent.NewSentDB()
+	defer sentDB.Close()
 	if err != nil {
 		fmt.Printf("Error initializing sent database: %v", err)
 		return
@@ -154,8 +156,8 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		}
 	}
 	if fileUrl == "" {
-		s.ChannelMessageSend(m.ChannelID, "No new posts found.")
-		return
+		fileUrl = files[0].URL
+		fmt.Printf("No new files found: %v", len(files))
 	}
 	req, err := http.NewRequest("GET", fileUrl, nil)
 	if err != nil {
