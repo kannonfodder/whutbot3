@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"kannonfoundry/whutbot3/api"
 	"kannonfoundry/whutbot3/config"
-	"kannonfoundry/whutbot3/db"
+	prefs "kannonfoundry/whutbot3/db/preferences"
 	"net/http"
 	"strings"
 )
@@ -52,7 +52,7 @@ func (s *R34MediaSearcher) Search(tags []string) (file []api.FileToSend, err err
 }
 
 func (s *R34MediaSearcher) FormatAndModifySearch(tags []string, authorID int64) (searchTerm string, err error) {
-	prefs, err := db.GetPreferences(authorID)
+	prefs, err := prefs.GetPreferences(authorID)
 	if err != nil {
 		return "", err
 	}
