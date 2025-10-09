@@ -6,7 +6,8 @@ import (
 	"kannonfoundry/whutbot3/api"
 	redgifsapi "kannonfoundry/whutbot3/api/redgifs"
 	"kannonfoundry/whutbot3/api/rule34"
-	"kannonfoundry/whutbot3/db"
+	prefs "kannonfoundry/whutbot3/db/preferences"
+	"kannonfoundry/whutbot3/db/sent"
 	"net/http"
 	"strconv"
 	"strings"
@@ -41,14 +42,14 @@ func handlePrefsCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 	}
 	switch command {
 	case "set":
-		err = db.SetPreferences(authorID, strings.Split(arguments, " "))
+		err = prefs.SetPreferences(authorID, strings.Split(arguments, " "))
 	case "add":
-		err = db.AddPreferences(authorID, strings.Split(arguments, " "))
+		err = prefs.AddPreferences(authorID, strings.Split(arguments, " "))
 	case "remove":
-		err = db.RemovePreferences(authorID, strings.Split(arguments, " "))
+		err = prefs.RemovePreferences(authorID, strings.Split(arguments, " "))
 
 	case "list":
-		prefs, err := db.GetPreferences(authorID)
+		prefs, err := prefs.GetPreferences(authorID)
 		if err == nil {
 			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Your preferences: %s", prefs.String()))
 		}
@@ -135,9 +136,31 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		return
 	}
 	//just get the first file for now
-	req, err := http.NewRequest("GET", files[0].URL, nil)
-	if err != nil {
 
+	sentDB, err := sent.NewSentDB()
+	if err != nil {
+		fmt.Printf("Error initializing sent database: %v", err)
+		return
+	}
+	var fileUrl = ""
+	for _, file := range files {
+		beenSent, err := sentDB.HasBeenSent(file.URL)
+		if err != nil {
+			fmt.Printf("Error checking sent database: %v", err)
+			return
+		}
+		if !beenSent {
+			fileUrl = file.URL
+		}
+	}
+	if fileUrl == "" {
+		s.ChannelMessageSend(m.ChannelID, "No new posts found.")
+		return
+	}
+	req, err := http.NewRequest("GET", fileUrl, nil)
+	if err != nil {
+		fmt.Printf("Error creating HTTP request: %v", err)
+		return
 	}
 
 	client := &http.Client{}
@@ -146,6 +169,12 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		return
 	}
 	defer resp.Body.Close()
+
+	err = sentDB.MarkAsSent(fileUrl)
+	if err != nil {
+		fmt.Printf("Error marking post as sent: %v", err)
+		return
+	}
 
 	_, err = s.ChannelFileSend(m.ChannelID, files[0].Name, resp.Body)
 	if err != nil {
