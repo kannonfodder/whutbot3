@@ -25,6 +25,11 @@ func NewSentDB() (*SentDB, error) {
 	}
 	return &SentDB{pool: dbpool}, nil
 }
+func (instance *SentDB) Close() {
+	if instance.pool != nil {
+		instance.pool.Close()
+	}
+}
 
 func (instance *SentDB) HasBeenSent(url string) (bool, error) {
 	if instance.items == nil {
