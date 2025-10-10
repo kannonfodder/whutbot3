@@ -136,7 +136,6 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		s.ChannelMessageSend(m.ChannelID, "No posts found.")
 		return
 	}
-	//just get the first file for now
 
 	sentDB, err := sent.NewSentDB()
 	if err != nil {
@@ -144,7 +143,10 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		return
 	}
 	defer sentDB.Close()
+
 	var fileUrl = ""
+	var resp *http.Response
+
 	for _, file := range files {
 		beenSent, err := sentDB.HasBeenSent(file.URL)
 		if err != nil {
@@ -153,31 +155,30 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		}
 		if !beenSent {
 			fileUrl = file.URL
+			resp, err := fetchAndMarkAsSent(fileUrl, sentDB) // We either send it or skip it for being too large, so don't send again
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%v", err))
+				return
+			}
+			defer resp.Body.Close()
+			if resp.Header.Get("Content-Length") != "" && resp.ContentLength > 8*1024*1024 {
+				resp.Body.Close()
+				fileUrl = ""
+				continue
+			} else {
+				break
+			}
 		}
 	}
-	if fileUrl == "" {
-		fileUrl = files[0].URL
+	if fileUrl == "" || resp == nil {
 		s.ChannelMessageSend(m.ChannelID, "No new files found")
-	}
-	req, err := http.NewRequest("GET", fileUrl, nil)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error creating HTTP request: %v", err))
 		return
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	err = sentDB.MarkAsSent(fileUrl)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error marking post as sent: %v", err))
 		return
 	}
-
 	_, err = s.ChannelFileSend(m.ChannelID, fileUrl, resp.Body)
 	if err != nil {
 		if strings.Contains(err.Error(), "entity too large") {
@@ -190,4 +191,20 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		s.ChannelMessageDelete(searchMsg.ChannelID, searchMsg.ID)
 	}
 
+}
+
+func fetchAndMarkAsSent(fileUrl string, sentDB *sent.SentDB) (resp *http.Response, err error) {
+	req, err := http.NewRequest("GET", fileUrl, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating HTTP request: %v", err)
+	}
+
+	client := &http.Client{}
+	resp, err = client.Do(req)
+	if err != nil {
+		return
+	}
+
+	err = sentDB.MarkAsSent(fileUrl)
+	return resp, err
 }
