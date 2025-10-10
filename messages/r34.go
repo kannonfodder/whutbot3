@@ -159,7 +159,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		fileUrl = files[0].URL
 		s.ChannelMessageSend(m.ChannelID, "No new files found")
 	}
-	req, err := http.NewRequest("GET", files[0].URL, nil)
+	req, err := http.NewRequest("GET", fileUrl, nil)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error creating HTTP request: %v", err))
 		return
