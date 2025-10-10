@@ -65,7 +65,7 @@ func handleMoreCommand(s *discordgo.Session, m *discordgo.MessageCreate, depth i
 		s.ChannelMessageSend(m.ChannelID, "More command received")
 	}
 	found := false
-	msgs, err := s.ChannelMessages(m.ChannelID, 5, lastMessageID, "", "")
+	msgs, err := s.ChannelMessages(m.ChannelID, 10, lastMessageID, "", "")
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error fetching messages: %v", err))
 		return
@@ -75,7 +75,7 @@ func handleMoreCommand(s *discordgo.Session, m *discordgo.MessageCreate, depth i
 		if msg.Author.Bot {
 			continue
 		}
-		if strings.HasPrefix(msg.Content, "gimme") {
+		if strings.HasPrefix(strings.ToLower(msg.Content), "gimme") {
 			found = true
 			_, arguments := parseCommand(msg.Content)
 			handleGimmeCommand(s, m, arguments)
