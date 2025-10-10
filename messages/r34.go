@@ -178,7 +178,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		return
 	}
 
-	_, err = s.ChannelFileSend(m.ChannelID, files[0].Name, resp.Body)
+	_, err = s.ChannelFileSend(m.ChannelID, fileUrl, resp.Body)
 	if err != nil {
 		if strings.Contains(err.Error(), "entity too large") {
 			s.ChannelMessageSend(m.ChannelID, "The booty too big 🥵")
