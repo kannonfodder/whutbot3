@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -173,7 +172,6 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 	}
 	defer resp.Body.Close()
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%v, %v", fileUrl, time.Now().UnixMilli()))
 	err = sentDB.MarkAsSent(fileUrl)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error marking post as sent: %v", err))
