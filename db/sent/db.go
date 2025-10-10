@@ -65,7 +65,7 @@ func (instance *SentDB) MarkAsSent(url string) error {
 }
 
 func (instance *SentDB) querySentItems() ([]SentItem, error) {
-	rows, err := instance.pool.Query(context.Background(), "SELECT TOP 50 url FROM sent_items order by ts DESC")
+	rows, err := instance.pool.Query(context.Background(), "SELECT url FROM sent_items order by ts DESC LIMIT 50")
 	if err != nil {
 		return nil, fmt.Errorf("error querying sent items: %v", err)
 	}
