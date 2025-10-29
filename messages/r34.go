@@ -80,6 +80,7 @@ func handleMoreCommand(s *discordgo.Session, m *discordgo.MessageCreate, depth i
 			_, arguments := parseCommand(msg.Content)
 			handleGimmeCommand(s, m, arguments)
 			s.MessageReactionRemove(m.ChannelID, m.ID, "🔍", s.State.User.ID)
+			break
 		}
 
 	}
@@ -105,7 +106,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		searchArgs = args
 	}
 	//s.ChannelMessageSend(m.ChannelID, "Gimme command received with args: "+args)
-	fmt.Printf("Searching for: %v", searchArgs)
+	fmt.Printf("Searching for: %v\n", searchArgs)
 	authorID, err := strconv.ParseInt(m.Author.ID, 10, 64)
 	if err != nil {
 		fmt.Printf("error parsing user ID: %v", err)
@@ -129,7 +130,7 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		return
 	}
 
-	fmt.Printf("Found files: %d", len(files))
+	fmt.Printf("Found files: %d \n", len(files))
 	//check if the posts slice is empty
 
 	if len(files) == 0 {
@@ -155,22 +156,23 @@ func handleGimmeCommand(s *discordgo.Session, m *discordgo.MessageCreate, args s
 		}
 		if !beenSent {
 			fileUrl = file.URL
-			resp, err := fetchAndMarkAsSent(fileUrl, sentDB) // We either send it or skip it for being too large, so don't send again
+			resp, err = fetchAndMarkAsSent(fileUrl, sentDB) // We either send it or skip it for being too large, so don't send again
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%v", err))
 				return
 			}
 			defer resp.Body.Close()
-			if resp.Header.Get("Content-Length") != "" && resp.ContentLength > 8*1024*1024 {
-				resp.Body.Close()
+			if resp.ContentLength > 8*1024*1024 {
+				fmt.Println("file too large")
 				fileUrl = ""
 				continue
 			} else {
+				fmt.Printf("sending %s\n", fileUrl)
 				break
 			}
 		}
 	}
-	if fileUrl == "" || resp == nil {
+	if fileUrl == "" {
 		s.ChannelMessageSend(m.ChannelID, "No new files found")
 		return
 	}

@@ -85,7 +85,7 @@ type GifsResponse struct {
 }
 
 func (c *RedGifsClient) FormatAndModifySearch(tags []string, authorID int64) (searchTerm string, err error) {
-	return strings.Join(tags, " "), nil
+	return strings.Join(tags, "|"), nil
 }
 
 func (c *RedGifsClient) Search(tags []string) (files []api.FileToSend, err error) {
@@ -94,8 +94,7 @@ func (c *RedGifsClient) Search(tags []string) (files []api.FileToSend, err error
 			return nil, fmt.Errorf("failed to login: %w", err)
 		}
 	}
-
-	req, err := http.NewRequest("GET", baseUrl+"/gifs/search?search_text="+tags[0]+"&count=5", nil)
+	req, err := http.NewRequest("GET", baseUrl+"/gifs/search?type=g&order=trending&count=10&tags="+strings.Join(tags, "|"), nil)
 	if err != nil {
 		return nil, err
 	}
